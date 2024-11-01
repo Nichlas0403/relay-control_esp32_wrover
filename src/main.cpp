@@ -22,18 +22,37 @@ void RestServerRouting();
 void HandleNotFound(AsyncWebServerRequest *request);
 void ConnectToWiFi(String ssid, String password);
 
+//WIFI
+//WIFI 
+String ssid = "SSID";
+String wifiPassword = "Password";
+
+unsigned long previousMillis = 0;
+const long interval = 10000; // Check every 10 seconds
+
 void setup() 
 {
   Serial.begin(9600);
-  String ssid = "SomeSSID";
-  String wifiPassword = "SomePassword";
-
   ConnectToWiFi(ssid, wifiPassword);
 }
 
 void loop() 
 {
+  unsigned long currentMillis = millis();
   
+  // Check Wi-Fi status periodically
+  if ((currentMillis - previousMillis >= interval) && WiFi.status() != WL_CONNECTED) 
+  {
+    Serial.println("WiFi disconnected, attempting to reconnect...");
+    previousMillis = currentMillis;  // Reset the timer
+    WiFi.disconnect();   // Force a disconnect
+
+    if(WiFi.reconnect())
+    {
+      Serial.println("Reconnecting succeeded!");
+    } 
+
+  }
 }
 
 void GetHealth(AsyncWebServerRequest *request) 
