@@ -4,6 +4,7 @@
 #include <ESPmDNS.h>
 #include <WiFi.h>
 #include "GPIOService.h"
+#include "SmartHomeService.h"
 
 //GPIOs
 #define _relay 12
@@ -11,6 +12,7 @@
 // Cores services
 AsyncWebServer _server(80);
 GPIOService _gpioService(_relay);
+SmartHomeService _smartHomeService;
 
 //Endpoints
 void GetHealth(AsyncWebServerRequest *request);
@@ -25,7 +27,7 @@ void ConnectToWiFi(String ssid, String password);
 //WIFI
 //WIFI 
 String ssid = "SSID";
-String wifiPassword = "Password";
+String wifiPassword = "PASSWORD";
 
 unsigned long previousMillis = 0;
 const long interval = 10000; // Check every 10 seconds
@@ -34,6 +36,7 @@ void setup()
 {
   Serial.begin(9600);
   ConnectToWiFi(ssid, wifiPassword);
+  _smartHomeService.UpdateIpAddress(WiFi.localIP().toString());
 }
 
 void loop() 
@@ -45,13 +48,31 @@ void loop()
   {
     Serial.println("WiFi disconnected, attempting to reconnect...");
     previousMillis = currentMillis;  // Reset the timer
-    WiFi.disconnect();   // Force a disconnect
 
-    if(WiFi.reconnect())
+    // Only attempt to reconnect if not already reconnecting
+    if (!WiFi.isConnected()) 
     {
-      Serial.println("Reconnecting succeeded!");
-    } 
+      WiFi.reconnect(); // Let the ESP32 handle reconnection automatically
+      
+      // Wait until connected, with a timeout
+      unsigned long startAttemptTime = millis();
+      while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 10000) 
+      {
+        delay(500); // Small delay to allow for network stability
+        Serial.println("Waiting for WiFi to reconnect...");
+      }
+    }
 
+    // Check if reconnection was successful
+    if (WiFi.status() == WL_CONNECTED) 
+    {
+      Serial.println("Reconnected to WiFi successfully!");
+      _smartHomeService.UpdateIpAddress(WiFi.localIP().toString());
+    } 
+    else 
+    {
+      Serial.println("Failed to reconnect to WiFi.");
+    }
   }
 }
 
