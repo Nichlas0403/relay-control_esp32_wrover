@@ -31,21 +31,29 @@ String wifiPassword = "PASSWORD";
 
 unsigned long previousMillis = 0;
 const long interval = 10000; // Check every 10 seconds
+bool smarthomeUpdated = false;
 
 void setup() 
 {
   Serial.begin(9600);
   ConnectToWiFi(ssid, wifiPassword);
-  _smartHomeService.UpdateIpAddress(WiFi.localIP().toString());
+  smarthomeUpdated = _smartHomeService.UpdateIpAddress(WiFi.localIP().toString());
 }
 
 void loop() 
 {
   unsigned long currentMillis = millis();
+
+  if(!smarthomeUpdated)
+  {
+    smarthomeUpdated = _smartHomeService.UpdateIpAddress(WiFi.localIP().toString());
+  }
   
   // Check Wi-Fi status periodically
   if ((currentMillis - previousMillis >= interval) && WiFi.status() != WL_CONNECTED) 
   {
+    smarthomeUpdated = false;
+
     Serial.println("WiFi disconnected, attempting to reconnect...");
     previousMillis = currentMillis;  // Reset the timer
 
@@ -67,7 +75,6 @@ void loop()
     if (WiFi.status() == WL_CONNECTED) 
     {
       Serial.println("Reconnected to WiFi successfully!");
-      _smartHomeService.UpdateIpAddress(WiFi.localIP().toString());
     } 
     else 
     {

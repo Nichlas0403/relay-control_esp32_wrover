@@ -6,8 +6,10 @@ SmartHomeService::SmartHomeService() : _client(), _wifiClient()
     
 }
 
-void SmartHomeService::UpdateIpAddress(String ipAddress)
+bool SmartHomeService::UpdateIpAddress(String ipAddress)
 {
+    Serial.println("Updating smarthome");
+
     String url = "http://homeassistant.local:8123/api/events/general_update_microcontroller_ip_address";
     
     // Initialize HTTPClient with the WiFiClient instance
@@ -26,4 +28,6 @@ void SmartHomeService::UpdateIpAddress(String ipAddress)
 
     // End the HTTP request
     _client.end();
+
+    return (httpResponseCode == 200);
 }
